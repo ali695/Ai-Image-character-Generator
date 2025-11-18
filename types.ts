@@ -3,6 +3,7 @@ export interface GeneratedItem {
   type: 'image' | 'video';
   data: string; // base64 for image, URL for video
   prompt: string;
+  mimeType?: string;
 }
 
 export interface ChatMessage {

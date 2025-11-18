@@ -23,17 +23,21 @@ const handleApiError = (error: unknown, context: string): Error => {
 };
 
 
-const generateImageFromImage = async (prompt: string, base64ImageDataUri: string): Promise<string> => {
-  const mimeType = base64ImageDataUri.match(/data:(.*);base64,/)?.[1] || 'image/png';
-  const base64Data = base64ImageDataUri.split(',')[1];
-  if (!base64Data) throw new Error('Invalid Base64 image data.');
+const generateImageFromImages = async (prompt: string, base64ImageDataUris: string[]): Promise<{ base64: string; mimeType: string }> => {
+  const parts: ({ inlineData: { mimeType: string; data: string; }; } | { text: string; })[] = [];
+  
+  for (const uri of base64ImageDataUris) {
+    const mimeType = uri.match(/data:(.*);base64,/)?.[1] || 'image/png';
+    const base64Data = uri.split(',')[1];
+    if (!base64Data) throw new Error('Invalid Base64 image data in one of the images.');
+    parts.push({ inlineData: { mimeType, data: base64Data } });
+  }
 
-  const imagePart = { inlineData: { mimeType, data: base64Data } };
-  const textPart = { text: prompt };
+  parts.push({ text: prompt });
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
-    contents: { parts: [imagePart, textPart] },
+    contents: { parts },
     config: { responseModalities: [Modality.IMAGE] },
   });
 
@@ -47,10 +51,11 @@ const generateImageFromImage = async (prompt: string, base64ImageDataUri: string
   }
 
   for (const part of candidate.content.parts) {
-    if (part.inlineData) return part.inlineData.data;
+    if (part.inlineData) return { base64: part.inlineData.data, mimeType: part.inlineData.mimeType };
   }
   throw new Error('No image found in response for image-to-image generation.');
 };
+
 
 export const generateCreativePrompts = async (basePrompt: string, count: number, preset: ScenePreset | null): Promise<string[]> => {
   try {
@@ -90,15 +95,16 @@ export const generateCreativePrompts = async (basePrompt: string, count: number,
 export const generateImageVariations = async (
   prompt: string,
   count: number,
-  referenceImage: string | null,
+  referenceImages: string[] | null,
   onProgress: (progress: number) => void,
   styleSuffix: string,
   preset: ScenePreset | null,
   aspectRatio: string,
-  outputMimeType: 'image/png' | 'image/jpeg'
-): Promise<{ base64: string; prompt: string }[]> => {
+  outputMimeType: 'image/png' | 'image/jpeg',
+  traitsToMaintain: string
+): Promise<{ base64: string; prompt: string; mimeType: string }[]> => {
   try {
-    const allImages: { base64: string; prompt: string }[] = [];
+    const allImages: { base64: string; prompt: string; mimeType: string }[] = [];
     
     let promptsToUse: string[];
     let startProgress = 0;
@@ -120,10 +126,19 @@ export const generateImageVariations = async (
       const currentPrompt = promptsToUse[i];
       let base64Result: string;
       let fullPrompt: string;
+      let resultMimeType: string;
+      
+      const hasReferenceImages = referenceImages && referenceImages.length > 0;
 
-      if (referenceImage) {
-        fullPrompt = `Using the provided image as a direct and primary reference, generate a new image. Strictly maintain the core identity, face, and key features of the character from the reference. The new image should depict: ${currentPrompt}. Apply the following style: ${styleSuffix}`;
-        base64Result = await generateImageFromImage(fullPrompt.replace(/, ,/g, ',').replace(/,\s*$/, '').trim(), referenceImage);
+      if (hasReferenceImages) {
+        let referencePrompt = 'Using the provided image(s) as a direct and primary reference, generate a new image. Strictly maintain the core identity, face, and key features of the character from the reference(s).';
+        if (traitsToMaintain) {
+          referencePrompt += ` Pay special attention to maintaining these specific traits: ${traitsToMaintain}.`;
+        }
+        fullPrompt = `${referencePrompt} The new image should depict: ${currentPrompt}. Apply the following style: ${styleSuffix}`;
+        const result = await generateImageFromImages(fullPrompt.replace(/, ,/g, ',').replace(/,\s*$/, '').trim(), referenceImages);
+        base64Result = result.base64;
+        resultMimeType = result.mimeType;
         if (i < promptsToUse.length - 1) await delay(40000);
       } else {
         fullPrompt = `${currentPrompt}, ${styleSuffix}`.replace(/, ,/g, ',').replace(/,\s*$/, '').trim();
@@ -137,10 +152,11 @@ export const generateImageVariations = async (
           },
         });
         base64Result = response.generatedImages[0].image.imageBytes;
+        resultMimeType = outputMimeType;
         if (i < promptsToUse.length - 1) await delay(40000);
       }
 
-      allImages.push({ base64: base64Result, prompt: fullPrompt });
+      allImages.push({ base64: base64Result, prompt: fullPrompt, mimeType: resultMimeType });
       onProgress(startProgress + Math.round((i + 1) * progressPerStep));
     }
 
@@ -151,10 +167,10 @@ export const generateImageVariations = async (
 };
 
 
-export const upscaleImage = async (base64Image: string): Promise<string> => {
+export const upscaleImage = async (base64Image: string, mimeType?: string): Promise<{ base64: string; mimeType: string }> => {
   try {
-    const imagePart = { inlineData: { mimeType: 'image/png', data: base64Image } };
-    const textPart = { text: 'Upscale this image to a higher resolution. Enhance the details, clarity, and sharpness without changing the content or style.' };
+    const imagePart = { inlineData: { mimeType: mimeType || 'image/png', data: base64Image } };
+    const textPart = { text: 'Re-render this image with significantly higher detail, clarity, and sharpness. The content, style, and composition should remain identical to the original.' };
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -171,7 +187,7 @@ export const upscaleImage = async (base64Image: string): Promise<string> => {
       throw new Error('Failed to upscale image. The response may have been blocked due to safety settings.');
     }
     for (const part of candidate.content.parts) {
-      if (part.inlineData) return part.inlineData.data;
+      if (part.inlineData) return { base64: part.inlineData.data, mimeType: part.inlineData.mimeType };
     }
     throw new Error('No upscaled image found in response.');
   } catch (error) {

@@ -11,9 +11,9 @@ export const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-export const downloadImage = (base64Image: string, filename: string) => {
+export const downloadImage = (base64Image: string, filename: string, mimeType?: string) => {
   const link = document.createElement('a');
-  link.href = `data:image/png;base64,${base64Image}`;
+  link.href = `data:${mimeType || 'image/png'};base64,${base64Image}`;
   link.download = filename;
   document.body.appendChild(link);
   link.click();
@@ -51,7 +51,8 @@ export const downloadAllAsZip = async (items: GeneratedItem[]) => {
     const safePrompt = item.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase();
     
     if (item.type === 'image') {
-      const filename = `character_${index + 1}_${safePrompt}.png`;
+      const extension = item.mimeType === 'image/jpeg' ? 'jpg' : 'png';
+      const filename = `character_${index + 1}_${safePrompt}.${extension}`;
       zip.file(filename, item.data, { base64: true });
     } else if (item.type === 'video') {
        try {

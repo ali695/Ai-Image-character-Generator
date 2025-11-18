@@ -13,7 +13,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, isUpscaling
   const handleDownload = () => {
     const safePrompt = item.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase();
     if (item.type === 'image') {
-      downloadImage(item.data, `character_${safePrompt}.png`);
+      downloadImage(item.data, `character_${safePrompt}.png`, item.mimeType);
     } else {
       downloadVideoFromUrl(item.data, `character_${safePrompt}.mp4`);
     }
@@ -23,7 +23,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, isUpscaling
     <div className="group relative aspect-square overflow-hidden rounded-lg shadow-lg animate-fadeIn">
       {item.type === 'image' ? (
         <img
-          src={`data:image/png;base64,${item.data}`}
+          src={`data:${item.mimeType || 'image/png'};base64,${item.data}`}
           alt={item.prompt}
           className="w-full h-full object-cover transition-transform transform group-hover:scale-105"
         />

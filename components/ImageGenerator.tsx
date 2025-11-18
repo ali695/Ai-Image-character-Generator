@@ -25,7 +25,8 @@ declare global {
 
 export const ImageGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
-  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [traitsToMaintain, setTraitsToMaintain] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<ArtStyle>(ART_STYLES[0]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
@@ -66,18 +67,18 @@ export const ImageGenerator: React.FC = () => {
   }, []);
   
   const handleGenerate = async (bulk = false) => {
-    if (!prompt && !referenceImage) {
+    if (!prompt && referenceImages.length === 0) {
       setError('Please provide a prompt or a reference image.');
       return;
     }
-    if (referenceImage && !prompt && !selectedPreset) {
-      setError('With a reference image, please describe the character or select a preset.');
+    if (referenceImages.length > 0 && !prompt && !selectedPreset) {
+      setError('With reference images, please describe the character or select a preset.');
       return;
     }
     setIsLoading(true);
     setError(null);
     setProgress(0);
-    const usedReferenceImage = referenceImage;
+    const usedReferenceImages = [...referenceImages];
     let caughtError: unknown = null;
 
     try {
@@ -88,17 +89,18 @@ export const ImageGenerator: React.FC = () => {
         : `${selectedStyle.prompt_suffix}, ${detailLevel.prompt_suffix}`;
         
       const imageResults = await generateImageVariations(
-        prompt, count, referenceImage, setProgress, styleSuffix, selectedPreset, aspectRatio, imageFormat
+        prompt, count, referenceImages, setProgress, styleSuffix, selectedPreset, aspectRatio, imageFormat, traitsToMaintain
       );
 
       const newImages: GeneratedItem[] = imageResults.map(result => ({
-        id: crypto.randomUUID(), type: 'image', data: result.base64, prompt: result.prompt
+        id: crypto.randomUUID(), type: 'image', data: result.base64, prompt: result.prompt, mimeType: result.mimeType,
       }));
 
       setGeneratedItems(prev => [...newImages, ...prev].slice(0, STORAGE_LIMIT));
 
-      if (usedReferenceImage) {
-        setReferenceImage(null);
+      if (usedReferenceImages.length > 0) {
+        setReferenceImages([]);
+        setTraitsToMaintain('');
         setSelectedPreset(null);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
@@ -134,11 +136,12 @@ export const ImageGenerator: React.FC = () => {
   };
   
   const handleAnimate = async () => {
-    if (!referenceImage) {
-      setError('Please upload a reference image to animate.');
+    if (referenceImages.length !== 1) {
+      setError('Please upload exactly one reference image to animate.');
       return;
     }
     const animationPrompt = prompt || selectedPreset?.name || 'A neutral, subtle animation.';
+    const referenceImage = referenceImages[0];
 
     setIsVideoLoading(true);
     setError(null);
@@ -157,7 +160,8 @@ export const ImageGenerator: React.FC = () => {
       setGeneratedItems(prev => [newVideo, ...prev].slice(0, STORAGE_LIMIT));
       
        if (usedReferenceImage) {
-        setReferenceImage(null);
+        setReferenceImages([]);
+        setTraitsToMaintain('');
         setSelectedPreset(null);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
@@ -183,9 +187,14 @@ export const ImageGenerator: React.FC = () => {
   };
 
 
-  const handleImageUpload = async (file: File) => {
-    const base64 = await fileToBase64(file);
-    setReferenceImage(base64);
+  const handleImagesUpload = async (files: File[]) => {
+    const base64Promises = files.map(fileToBase64);
+    const base64Images = await Promise.all(base64Promises);
+    setReferenceImages(prev => [...prev, ...base64Images]);
+  };
+  
+  const handleImageRemove = (index: number) => {
+    setReferenceImages(prev => prev.filter((_, i) => i !== index));
   };
   
   const handleUpscale = async (imageId: string) => {
@@ -198,9 +207,12 @@ export const ImageGenerator: React.FC = () => {
       return;
     }
     try {
-      const upscaledBase64 = await upscaleImage(imageToUpscale.data);
+      const upscaledResult = await upscaleImage(imageToUpscale.data, imageToUpscale.mimeType);
       const upscaledImage: GeneratedItem = {
-        ...imageToUpscale, data: upscaledBase64, prompt: imageToUpscale.prompt + ' (Upscaled)',
+        ...imageToUpscale,
+        data: upscaledResult.base64,
+        mimeType: upscaledResult.mimeType,
+        prompt: imageToUpscale.prompt + ' (Upscaled)',
       };
       setGeneratedItems(prev => prev.map(item => item.id === imageId ? upscaledImage : item));
     } catch (err) {
@@ -219,7 +231,7 @@ export const ImageGenerator: React.FC = () => {
     
     if (selectedPreset?.id === preset.id) {
         setSelectedPreset(null); // Deselect if clicked again
-    } else if (referenceImage) {
+    } else if (referenceImages.length > 0) {
         setSelectedPreset(preset);
         setPrompt(''); // Clear prompt, as the preset will provide themes for the character
     } else {
@@ -271,16 +283,16 @@ export const ImageGenerator: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {showSuccessToast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg z-50 animate-fadeInOut">
-          Reference item used and cleared successfully!
+          Reference item(s) used and cleared successfully!
         </div>
       )}
       <div className="lg:col-span-1 flex flex-col gap-6 animate-fadeIn" style={{ animationDelay: '100ms' }}>
         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><span className="font-bold text-indigo-400">1.</span> Upload Reference (Optional)</h2>
-          <UploadBox onImageUpload={handleImageUpload} referenceImage={referenceImage} setReferenceImage={setReferenceImage}/>
-           {referenceImage && (
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><span className="font-bold text-indigo-400">1.</span> Upload References (Optional)</h2>
+          <UploadBox onImagesUpload={handleImagesUpload} referenceImages={referenceImages} onImageRemove={handleImageRemove}/>
+           {referenceImages.length > 0 && (
             <p className="text-center text-sm text-green-400 mt-3 p-2 bg-green-900/50 rounded-md border border-green-700">
-              Using uploaded image as reference.
+              Using {referenceImages.length} uploaded image(s) as reference.
             </p>
           )}
         </div>
@@ -288,7 +300,7 @@ export const ImageGenerator: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4"><span className="font-bold text-indigo-400">2.</span> Describe or Choose Preset</h2>
           <textarea
             className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 resize-none h-24 mb-4"
-            placeholder={referenceImage ? "e.g., a brave knight, a wizard" : "Describe a scene or character..."}
+            placeholder={referenceImages.length > 0 ? "e.g., a brave knight, a wizard" : "Describe a scene or character..."}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
@@ -297,6 +309,19 @@ export const ImageGenerator: React.FC = () => {
         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4"><span className="font-bold text-indigo-400">3.</span> Choose a Style</h2>
           <StyleSelector styles={ART_STYLES} selectedStyle={selectedStyle} onSelectStyle={setSelectedStyle} disabled={enhanceQuality}/>
+        </div>
+        
+        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+            <h2 className="text-xl font-semibold mb-4"><span className="font-bold text-indigo-400">4.</span> Maintain Traits (Optional)</h2>
+            <p className="text-sm text-gray-400 mb-2">List specific features to keep consistent, separated by commas.</p>
+            <input
+                type="text"
+                className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="e.g., blue eyes, scar over left eye"
+                value={traitsToMaintain}
+                onChange={(e) => setTraitsToMaintain(e.target.value)}
+                disabled={referenceImages.length === 0}
+            />
         </div>
         
         <QualityControls 
@@ -325,7 +350,7 @@ export const ImageGenerator: React.FC = () => {
            {hasSelectedApiKey ? (
              <button
               onClick={(e) => {createRipple(e); handleAnimate();}}
-              disabled={isLoading || isVideoLoading || !!upscalingId || !referenceImage}
+              disabled={isLoading || isVideoLoading || !!upscalingId || referenceImages.length !== 1}
               className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${(isVideoLoading) ? 'animate-glow' : ''}`}
             >
                {isVideoLoading ? (
