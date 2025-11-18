@@ -1,5 +1,5 @@
 import { GoogleGenAI, Chat, Modality, Type, Content } from '@google/genai';
-import { ScenePreset, ChatMessage } from '../types';
+import { ChatMessage } from '../types';
 
 const API_KEY = process.env.API_KEY;
 
@@ -57,16 +57,10 @@ const generateImageFromImages = async (prompt: string, base64ImageDataUris: stri
 };
 
 
-export const generateCreativePrompts = async (basePrompt: string, count: number, preset: ScenePreset | null): Promise<string[]> => {
+export const generateCreativePrompts = async (basePrompt: string, count: number): Promise<string[]> => {
   try {
-    let systemInstruction = `You are a creative assistant for an AI image generator. Your task is to generate a JSON array of ${count} unique, vivid, and detailed scene descriptions based on a user's base prompt. Each description should be a string and should explore different environments, camera angles, actions, and moods to create variety. Do not number the prompts. Just return a clean JSON array of strings.`;
-    
-    let userPrompt = `Generate ${count} creative scene prompts based on this idea: "${basePrompt}"`;
-
-    if (preset) {
-        systemInstruction = `You are a creative assistant for an AI image generator. Your task is to generate a JSON array of ${count} unique, vivid, and detailed scene descriptions based on a user's base character prompt and a thematic preset. Each description must incorporate the theme of "${preset.name}" and use keywords like "${preset.keywords}". Explore varied poses, environments, and actions relevant to the theme. Return a clean JSON array of strings.`
-        userPrompt = `Generate ${count} creative "${preset.name}" scene prompts for the character described as: "${basePrompt}"`;
-    }
+    const systemInstruction = `You are a creative assistant for an AI image generator. Your task is to generate a JSON array of ${count} unique, vivid, and detailed scene descriptions based on a user's base prompt. Each description should be a string and should explore different environments, camera angles, actions, and moods to create variety. Do not number the prompts. Just return a clean JSON array of strings.`;
+    const userPrompt = `Generate ${count} creative scene prompts based on this idea: "${basePrompt}"`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -82,12 +76,11 @@ export const generateCreativePrompts = async (basePrompt: string, count: number,
     });
     const prompts = JSON.parse(response.text.trim());
     if (!Array.isArray(prompts) || prompts.length === 0) throw new Error("Failed to parse prompts.");
-    while (prompts.length < count) prompts.push(`${basePrompt}, ${preset?.keywords || ''}`.trim()); // Fallback
+    while (prompts.length < count) prompts.push(basePrompt); // Fallback
     return prompts.slice(0, count);
   } catch (error) {
      console.error("Error generating creative prompts, using fallback:", error);
-     const fallbackPrompt = `${basePrompt}, ${preset?.keywords || ''}`.trim();
-     return Array(count).fill(fallbackPrompt);
+     return Array(count).fill(basePrompt);
   }
 };
 
@@ -98,7 +91,6 @@ export const generateImageVariations = async (
   referenceImages: string[] | null,
   onProgress: (progress: number) => void,
   styleSuffix: string,
-  preset: ScenePreset | null,
   aspectRatio: string,
   outputMimeType: 'image/png' | 'image/jpeg',
   traitsToMaintain: string
@@ -111,7 +103,7 @@ export const generateImageVariations = async (
 
     if (count > 1) {
       onProgress(5);
-      promptsToUse = await generateCreativePrompts(prompt, count, preset);
+      promptsToUse = await generateCreativePrompts(prompt, count);
       onProgress(15);
       startProgress = 15;
     } else {

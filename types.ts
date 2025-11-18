@@ -1,3 +1,6 @@
+import type React from 'react';
+import { LucideProps } from 'lucide-react';
+
 export interface GeneratedItem {
   id: string;
   type: 'image' | 'video';
@@ -19,10 +22,16 @@ export interface ArtStyle {
   thumbnail: string;
 }
 
-export interface ScenePreset {
+export interface Preset {
   id: string;
   name: string;
-  keywords: string; // For theming generations with a reference character
-  prompt_standalone: string; // For generating a full scene from text only
-  thumbnail: string;
+  prompt: string;
+  icon: React.FC<LucideProps>;
+}
+
+export interface PresetCategory {
+  id: string;
+  name: string;
+  icon: React.FC<LucideProps>;
+  presets: Preset[];
 }

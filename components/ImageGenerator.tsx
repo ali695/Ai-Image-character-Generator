@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Package, Loader2, Film, KeyRound, Upload, FileText, Palette, SlidersHorizontal, Eye } from 'lucide-react';
-import { GeneratedItem, ArtStyle, ScenePreset } from '../types';
+import { Sparkles, Package, Loader2, Film, KeyRound, Upload, FileText, Palette, SlidersHorizontal, Eye, Compass } from 'lucide-react';
+import { GeneratedItem, ArtStyle } from '../types';
 import { ART_STYLES, DETAIL_LEVELS, ENHANCED_QUALITY_PROMPT } from '../constants';
 import { generateImageVariations, upscaleImage, generateVideo } from '../services/geminiService';
 import { fileToBase64 } from '../utils/fileUtils';
@@ -9,8 +9,8 @@ import { Gallery } from './Gallery';
 import { StyleSelector } from './StyleSelector';
 import { UploadBox } from './UploadBox';
 import { QualityControls } from './QualityControls';
-import { ScenePresetSelector } from './ScenePresetSelector';
 import { ImageEditorModal } from './ImageEditorModal';
+import { PresetBrowser } from './PresetBrowser';
 
 // Fix: Defined the AIStudio interface and used it in the Window interface
 // to resolve the type conflict with other potential global declarations.
@@ -51,6 +51,7 @@ export const ImageGenerator: React.FC = () => {
   const [upscalingId, setUpscalingId] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<GeneratedItem | null>(null);
+  const [isPresetBrowserOpen, setIsPresetBrowserOpen] = useState(false);
 
   // New Quality Control State
   const [batchSize, setBatchSize] = useState<number>(50);
@@ -58,7 +59,6 @@ export const ImageGenerator: React.FC = () => {
   const [detailLevel, setDetailLevel] = useState(DETAIL_LEVELS[2]); // Default to 'High'
   const [imageFormat, setImageFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
   const [enhanceQuality, setEnhanceQuality] = useState<boolean>(false);
-  const [selectedPreset, setSelectedPreset] = useState<ScenePreset | null>(null);
   
   // New state for API key selection
   const [hasSelectedApiKey, setHasSelectedApiKey] = useState<boolean>(false);
@@ -83,11 +83,11 @@ export const ImageGenerator: React.FC = () => {
   
   const handleGenerate = async (bulk = false) => {
     if (!prompt && referenceImages.length === 0) {
-      setError('Please provide a prompt or a reference image.');
+      setError('Please describe your character or upload a reference image.');
       return;
     }
-    if (referenceImages.length > 0 && !prompt && !selectedPreset) {
-      setError('With reference images, please describe the character or select a preset.');
+    if (referenceImages.length > 0 && !prompt) {
+      setError('With reference images, please describe the character or a scene.');
       return;
     }
     setIsLoading(true);
@@ -104,7 +104,7 @@ export const ImageGenerator: React.FC = () => {
         : `${selectedStyle.prompt_suffix}, ${detailLevel.prompt_suffix}`;
         
       const imageResults = await generateImageVariations(
-        prompt, count, referenceImages, setProgress, styleSuffix, selectedPreset, aspectRatio, imageFormat, traitsToMaintain
+        prompt, count, referenceImages, setProgress, styleSuffix, aspectRatio, imageFormat, traitsToMaintain
       );
 
       const newImages: GeneratedItem[] = imageResults.map(result => ({
@@ -116,7 +116,6 @@ export const ImageGenerator: React.FC = () => {
       if (usedReferenceImages.length > 0) {
         setReferenceImages([]);
         setTraitsToMaintain('');
-        setSelectedPreset(null);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
       }
@@ -155,7 +154,7 @@ export const ImageGenerator: React.FC = () => {
       setError('Please upload exactly one reference image to animate.');
       return;
     }
-    const animationPrompt = prompt || selectedPreset?.name || 'A neutral, subtle animation.';
+    const animationPrompt = prompt || 'A neutral, subtle animation of the character.';
     const referenceImage = referenceImages[0];
 
     setIsVideoLoading(true);
@@ -177,7 +176,6 @@ export const ImageGenerator: React.FC = () => {
        if (usedReferenceImage) {
         setReferenceImages([]);
         setTraitsToMaintain('');
-        setSelectedPreset(null);
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 3000);
       }
@@ -258,23 +256,10 @@ export const ImageGenerator: React.FC = () => {
     setGeneratedItems(prev => prev.map(item => (item.id === editingItem.id ? updatedItem : item)));
     setEditingItem(null);
   };
-
-  const handlePresetSelection = (preset: ScenePreset | null) => {
-    if (!preset) {
-        setSelectedPreset(null);
-        return;
-    }
-    
-    if (selectedPreset?.id === preset.id) {
-        setSelectedPreset(null); // Deselect if clicked again
-    } else if (referenceImages.length > 0) {
-        setSelectedPreset(preset);
-        setPrompt(''); // Clear prompt, as the preset will provide themes for the character
-    } else {
-        // In prompt-only mode, clicking a preset fills the textarea with a full scene
-        setPrompt(preset.prompt_standalone);
-        setSelectedPreset(null); // The action is to fill the prompt, not to select a theme
-    }
+  
+  const handleSelectPreset = (presetPrompt: string) => {
+    setPrompt(prev => prev ? `${prev.trim()}, ${presetPrompt}` : presetPrompt);
+    setIsPresetBrowserOpen(false);
   };
 
   const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -336,14 +321,21 @@ export const ImageGenerator: React.FC = () => {
               )}
           </ControlModule>
 
-          <ControlModule icon={<FileText size={18} className="text-gray-300" />} title="Describe or Choose Preset">
-              <textarea
-                  className="w-full bg-black/20 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none h-24 mb-4 placeholder-gray-500"
-                  placeholder={referenceImages.length > 0 ? "e.g., a brave knight, a wizard..." : "A photorealistic portrait of..."}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-              />
-              <ScenePresetSelector selectedPreset={selectedPreset} onSelectPreset={handlePresetSelection} />
+          <ControlModule icon={<FileText size={18} className="text-gray-300" />} title="Describe your Character">
+             <div className="relative">
+                <textarea
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none h-28 placeholder-gray-500"
+                    placeholder={referenceImages.length > 0 ? "e.g., a brave knight in a forest..." : "A photorealistic portrait of a woman..."}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                />
+                 <button 
+                    onClick={() => setIsPresetBrowserOpen(true)}
+                    className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-full transition-colors"
+                  >
+                   <Compass size={14} /> Presets
+                  </button>
+             </div>
           </ControlModule>
 
           {referenceImages.length > 0 && (
@@ -459,6 +451,13 @@ export const ImageGenerator: React.FC = () => {
         onClose={() => setEditingItem(null)}
         onSave={handleEditSave}
       />
+      
+      <PresetBrowser
+        isOpen={isPresetBrowserOpen}
+        onClose={() => setIsPresetBrowserOpen(false)}
+        onSelectPreset={handleSelectPreset}
+      />
+
     </div>
   );
 };
