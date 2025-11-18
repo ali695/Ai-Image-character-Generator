@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Trash2 } from 'lucide-react';
+import { Download, Trash2, Clapperboard } from 'lucide-react';
 import { GeneratedItem } from '../types';
 import { downloadAllAsZip } from '../utils/fileUtils';
 import { ItemCard } from './ItemCard';
@@ -20,43 +20,46 @@ export const Gallery: React.FC<GalleryProps> = ({ items, setItems, onUpscale, up
   };
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Your Creations</h2>
+    <div className="relative glass-card rounded-2xl p-6 lg:p-8 h-full flex flex-col">
+      <div className="flex flex-wrap justify-between items-center mb-6 gap-4 flex-shrink-0">
+        <h2 className="text-2xl font-semibold text-gray-100">Your Creations</h2>
         {items.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => downloadAllAsZip(items)}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors"
             >
               <Download size={16} /> Download All
             </button>
             <button
               onClick={handleClearAll}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 font-semibold py-2 px-4 rounded-lg text-sm transition-colors"
             >
               <Trash2 size={16} /> Clear All
             </button>
           </div>
         )}
       </div>
-      {items.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[80vh] overflow-y-auto pr-2">
-          {items.map(item => (
-            <ItemCard 
-              key={item.id} 
-              item={item} 
-              onUpscale={onUpscale} 
-              isUpscaling={upscalingId === item.id}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 border-2 border-dashed border-gray-600 rounded-lg p-8">
-          <p className="text-lg">Your generated images and videos will appear here.</p>
-          <p className="text-sm">Use the controls on the left to start creating!</p>
-        </div>
-      )}
+      <div className="relative flex-1 overflow-y-auto">
+        {items.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pr-2">
+            {items.map(item => (
+              <ItemCard 
+                key={item.id} 
+                item={item} 
+                onUpscale={onUpscale} 
+                isUpscaling={upscalingId === item.id}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 border-2 border-dashed border-white/10 rounded-lg p-8">
+            <Clapperboard size={48} className="mb-4 text-gray-600"/>
+            <p className="text-lg font-medium text-gray-400">Your gallery is empty</p>
+            <p className="text-sm">Use the controls on the left to start creating!</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

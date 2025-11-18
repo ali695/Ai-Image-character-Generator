@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Volume2, Bot, User } from 'lucide-react';
+import { Send, Volume2, Bot, User, CornerDownLeft } from 'lucide-react';
 import { Chat } from '@google/genai';
 import { ChatMessage } from '../types';
 import { initializeChat, generateSpeech } from '../services/geminiService';
@@ -91,18 +92,18 @@ export const Chatbot: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl shadow-2xl flex flex-col h-[75vh]">
+    <div className="w-full max-w-4xl mx-auto glass-card rounded-2xl shadow-2xl flex flex-col h-full">
       <div className="flex-1 p-6 overflow-y-auto">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+            <div key={msg.id} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
               {msg.role === 'model' && (
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex-shrink-0 flex items-center justify-center shadow-lg">
                   <Bot size={20} />
                 </div>
               )}
-              <div className={`max-w-md p-3 rounded-xl ${msg.role === 'user' ? 'bg-blue-600 rounded-br-none' : 'bg-gray-700 rounded-bl-none'}`}>
-                <p className="text-white whitespace-pre-wrap">{msg.text}</p>
+              <div className={`max-w-xl p-4 rounded-xl shadow-md ${msg.role === 'user' ? 'bg-blue-600/80 rounded-br-none' : 'bg-black/20 border border-white/10 rounded-bl-none'}`}>
+                <p className="text-white whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                 {msg.role === 'model' && msg.text !== '...' && (
                    <button onClick={() => handlePlayAudio(msg.text)} className="mt-2 text-gray-400 hover:text-white transition-colors">
                      <Volume2 size={16} />
@@ -110,7 +111,7 @@ export const Chatbot: React.FC = () => {
                 )}
               </div>
                {msg.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center shadow-lg">
                   <User size={20} />
                 </div>
               )}
@@ -119,24 +120,26 @@ export const Chatbot: React.FC = () => {
            <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-white/10">
         <div className="relative">
-          <input
-            type="text"
+          <textarea
+            rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
             placeholder="Ask anything..."
             disabled={isLoading}
-            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg py-3 pl-4 pr-12 text-white focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="w-full bg-black/20 border border-white/10 rounded-lg py-3 pl-4 pr-24 text-white focus:ring-2 focus:ring-purple-500 transition-all resize-none max-h-40"
           />
           <button
             onClick={handleSend}
-            disabled={isLoading}
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 p-2 rounded-md disabled:opacity-50"
+            disabled={isLoading || !input.trim()}
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 p-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+            aria-label="Send message"
           >
             <Send size={20} />
           </button>
+           {!isLoading && <kbd className="absolute right-16 top-1/2 -translate-y-1/2 text-xs text-gray-500 hidden sm:flex items-center gap-1">Enter<CornerDownLeft size={12}/></kbd>}
         </div>
       </div>
     </div>

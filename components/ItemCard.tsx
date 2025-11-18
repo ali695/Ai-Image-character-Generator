@@ -20,43 +20,50 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, isUpscaling
   };
 
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-lg shadow-lg animate-fadeIn">
-      {item.type === 'image' ? (
-        <img
-          src={`data:${item.mimeType || 'image/png'};base64,${item.data}`}
-          alt={item.prompt}
-          className="w-full h-full object-cover transition-transform transform group-hover:scale-105"
-        />
-      ) : (
-        <>
-          <video
-            src={item.data}
+    <div 
+      className="item-card relative aspect-square group animate-fadeIn"
+      style={{'--glow-color': 'rgba(139, 92, 246, 0.4)'} as React.CSSProperties}
+    >
+      <div className="item-card-content relative w-full h-full rounded-lg shadow-lg overflow-hidden border border-white/10">
+        {item.type === 'image' ? (
+          <img
+            src={`data:${item.mimeType || 'image/png'};base64,${item.data}`}
+            alt={item.prompt}
             className="w-full h-full object-cover"
-            autoPlay
-            loop
-            muted
-            playsInline
           />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <PlayCircle size={48} className="text-white/80" />
-          </div>
-        </>
-      )}
+        ) : (
+          <>
+            <video
+              src={item.data}
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <PlayCircle size={48} className="text-white/80 drop-shadow-lg" />
+            </div>
+          </>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
 
       {isUpscaling && (
-        <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-20 rounded-lg">
             <Loader2 className="h-8 w-8 animate-spin text-white" />
-            <p className="text-white mt-2 text-sm">Upscaling...</p>
+            <p className="text-white mt-2 text-sm font-semibold">Upscaling...</p>
         </div>
       )}
-      <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 ${isUpscaling ? '!opacity-0' : ''}`}>
-        <p className="text-white text-xs line-clamp-3 drop-shadow-md">{item.prompt}</p>
-        <div className="self-end flex items-center gap-2">
+
+      <div className={`absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-between items-center z-10 ${isUpscaling ? '!opacity-0' : ''}`}>
+        <p className="text-white text-xs line-clamp-2 drop-shadow-md flex-1 mr-2">{item.prompt}</p>
+        <div className="flex items-center gap-2 flex-shrink-0">
            {item.type === 'image' && (
              <button
               onClick={() => onUpscale(item.id)}
               disabled={isUpscaling}
-              className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white p-2 rounded-full transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Upscale image"
               title="Upscale Image"
             >
@@ -65,7 +72,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, isUpscaling
            )}
           <button
             onClick={handleDownload}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-full transition-colors shadow-lg"
+            className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white p-2 rounded-full transition-all transform hover:scale-110"
             aria-label="Download item"
             title="Download"
           >

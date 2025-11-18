@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Package, Loader2, Film, KeyRound } from 'lucide-react';
+import { Sparkles, Package, Loader2, Film, KeyRound, Upload, FileText, Palette, SlidersHorizontal, Eye } from 'lucide-react';
 import { GeneratedItem, ArtStyle, ScenePreset } from '../types';
 import { ART_STYLES, DETAIL_LEVELS, ENHANCED_QUALITY_PROMPT } from '../constants';
 import { generateImageVariations, upscaleImage, generateVideo } from '../services/geminiService';
@@ -22,6 +23,19 @@ declare global {
     aistudio?: AIStudio;
   }
 }
+
+const ControlModule: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode; className?: string }> = ({ icon, title, children, className = '' }) => (
+  <div className={`relative glass-card rounded-2xl ${className}`}>
+    <div className="p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg">{icon}</div>
+        <h2 className="text-lg font-semibold text-gray-100">{title}</h2>
+      </div>
+      {children}
+    </div>
+  </div>
+);
+
 
 export const ImageGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
@@ -278,130 +292,143 @@ export const ImageGenerator: React.FC = () => {
     );
   };
 
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-8 h-full">
       {showSuccessToast && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg z-50 animate-fadeInOut">
           Reference item(s) used and cleared successfully!
         </div>
       )}
-      <div className="lg:col-span-1 flex flex-col gap-6 animate-fadeIn" style={{ animationDelay: '100ms' }}>
-        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><span className="font-bold text-indigo-400">1.</span> Upload References (Optional)</h2>
-          <UploadBox onImagesUpload={handleImagesUpload} referenceImages={referenceImages} onImageRemove={handleImageRemove}/>
-           {referenceImages.length > 0 && (
-            <p className="text-center text-sm text-green-400 mt-3 p-2 bg-green-900/50 rounded-md border border-green-700">
-              Using {referenceImages.length} uploaded image(s) as reference.
-            </p>
+      
+      {/* Left Control Panel */}
+      <div className="lg:col-span-1 xl:col-span-1 flex flex-col animate-fadeIn" style={{ animationDelay: '100ms' }}>
+        
+        {/* Scrollable Upper Section */}
+        <div className="flex-1 space-y-6 overflow-y-auto pr-4 pb-6 -mr-4">
+          <ControlModule icon={<Upload size={18} className="text-gray-300" />} title="Upload References">
+              <UploadBox onImagesUpload={handleImagesUpload} referenceImages={referenceImages} onImageRemove={handleImageRemove}/>
+              {referenceImages.length > 0 && (
+                  <p className="text-center text-sm text-green-300 mt-4 p-2 bg-green-500/10 rounded-md border border-green-500/20">
+                  Using {referenceImages.length} reference image(s).
+                  </p>
+              )}
+          </ControlModule>
+
+          <ControlModule icon={<FileText size={18} className="text-gray-300" />} title="Describe or Choose Preset">
+              <textarea
+                  className="w-full bg-black/20 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none h-24 mb-4 placeholder-gray-500"
+                  placeholder={referenceImages.length > 0 ? "e.g., a brave knight, a wizard..." : "A photorealistic portrait of..."}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+              />
+              <ScenePresetSelector selectedPreset={selectedPreset} onSelectPreset={handlePresetSelection} />
+          </ControlModule>
+
+          {referenceImages.length > 0 && (
+            <ControlModule icon={<Eye size={18} className="text-gray-300" />} title="Maintain Traits" className="animate-fadeIn">
+                <p className="text-sm text-gray-400 mb-3">List specific features to keep consistent, separated by commas.</p>
+                <input
+                    type="text"
+                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 placeholder-gray-500"
+                    placeholder="e.g., blue eyes, scar over left eye"
+                    value={traitsToMaintain}
+                    onChange={(e) => setTraitsToMaintain(e.target.value)}
+                />
+            </ControlModule>
           )}
-        </div>
-         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4"><span className="font-bold text-indigo-400">2.</span> Describe or Choose Preset</h2>
-          <textarea
-            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 resize-none h-24 mb-4"
-            placeholder={referenceImages.length > 0 ? "e.g., a brave knight, a wizard" : "Describe a scene or character..."}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-          />
-          <ScenePresetSelector selectedPreset={selectedPreset} onSelectPreset={handlePresetSelection} />
-        </div>
-        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4"><span className="font-bold text-indigo-400">3.</span> Choose a Style</h2>
-          <StyleSelector styles={ART_STYLES} selectedStyle={selectedStyle} onSelectStyle={setSelectedStyle} disabled={enhanceQuality}/>
-        </div>
-        
-        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
-            <h2 className="text-xl font-semibold mb-4"><span className="font-bold text-indigo-400">4.</span> Maintain Traits (Optional)</h2>
-            <p className="text-sm text-gray-400 mb-2">List specific features to keep consistent, separated by commas.</p>
-            <input
-                type="text"
-                className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="e.g., blue eyes, scar over left eye"
-                value={traitsToMaintain}
-                onChange={(e) => setTraitsToMaintain(e.target.value)}
-                disabled={referenceImages.length === 0}
+
+          <ControlModule icon={<Palette size={18} className="text-gray-300" />} title="Choose a Style">
+              <StyleSelector styles={ART_STYLES} selectedStyle={selectedStyle} onSelectStyle={setSelectedStyle} disabled={enhanceQuality}/>
+          </ControlModule>
+                  
+          <ControlModule icon={<SlidersHorizontal size={18} className="text-gray-300" />} title="Advanced Quality Controls">
+            <QualityControls 
+              batchSize={batchSize} setBatchSize={setBatchSize}
+              aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}
+              detailLevel={detailLevel} setDetailLevel={setDetailLevel}
+              imageFormat={imageFormat} setImageFormat={setImageFormat}
+              enhanceQuality={enhanceQuality} setEnhanceQuality={setEnhanceQuality}
             />
+          </ControlModule>
         </div>
         
-        <QualityControls 
-          batchSize={batchSize} setBatchSize={setBatchSize}
-          aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}
-          detailLevel={detailLevel} setDetailLevel={setDetailLevel}
-          imageFormat={imageFormat} setImageFormat={setImageFormat}
-          enhanceQuality={enhanceQuality} setEnhanceQuality={setEnhanceQuality}
-        />
-        
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={(e) => {createRipple(e); handleGenerate(false);}}
-            disabled={isLoading || isVideoLoading || !!upscalingId}
-            className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${(isLoading || isVideoLoading) ? 'animate-glow' : ''}`}
-          >
-            {renderGenerateButtonContent(false)}
-          </button>
-          <button
-            onClick={(e) => {createRipple(e); handleGenerate(true);}}
-            disabled={isLoading || isVideoLoading || !!upscalingId}
-            className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${(isLoading || isVideoLoading) ? 'animate-glow' : ''}`}
-          >
-            {renderGenerateButtonContent(true)}
-          </button>
-           {hasSelectedApiKey ? (
-             <button
-              onClick={(e) => {createRipple(e); handleAnimate();}}
-              disabled={isLoading || isVideoLoading || !!upscalingId || referenceImages.length !== 1}
-              className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${(isVideoLoading) ? 'animate-glow' : ''}`}
+        {/* Anchored Bottom Section */}
+        <div className="flex-shrink-0 pt-6">
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={(e) => {createRipple(e); handleGenerate(false);}}
+              disabled={isLoading || isVideoLoading || !!upscalingId}
+              style={{'--glow-color': 'rgba(139, 92, 246, 0.6)'} as React.CSSProperties}
+              className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${(isLoading) ? 'animate-pulse-glow' : ''}`}
             >
-               {isVideoLoading ? (
-                 <>
-                   <Loader2 size={20} className="animate-spin" />
-                   <span>Animating ({videoProgress.toFixed(0)}%)...</span>
-                 </>
-               ) : (
-                  <>
-                    <Film size={20} /> Animate Character (8s)
-                  </>
-               )}
+              {renderGenerateButtonContent(false)}
             </button>
-           ) : (
-            <div className="flex flex-col items-center text-center gap-2 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <h3 className="font-semibold text-gray-100">Enable Video Generation</h3>
-                <p className="text-xs text-gray-400 mb-2">
-                    This feature requires selecting an API key. For more information, see the <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline hover:text-indigo-300">billing documentation</a>.
-                </p>
-                <button
-                    onClick={(e) => {createRipple(e); handleSelectApiKey();}}
-                    className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105`}
-                >
-                    <KeyRound size={20} /> Select API Key
-                </button>
-            </div>
-           )}
-        </div>
-         {(isLoading || isVideoLoading) && (
-          <div className="mt-4 space-y-3">
-            {isLoading && (
-              <div>
-                <p className="text-sm text-center mb-1">Image Generation</p>
-                <div className="w-full bg-gray-700 rounded-full h-2.5">
-                  <div className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                </div>
-              </div>
-            )}
-            {isVideoLoading && (
-               <div>
-                <p className="text-sm text-center mb-1">Video Generation</p>
-                <div className="w-full bg-gray-700 rounded-full h-2.5">
-                  <div className="bg-pink-600 h-2.5 rounded-full transition-all duration-500" style={{ width: `${videoProgress}%` }}></div>
-                </div>
+            <button
+              onClick={(e) => {createRipple(e); handleGenerate(true);}}
+              disabled={isLoading || isVideoLoading || !!upscalingId}
+              style={{'--glow-color': 'rgba(22, 163, 74, 0.6)'} as React.CSSProperties}
+              className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${(isLoading) ? 'animate-pulse-glow' : ''}`}
+            >
+              {renderGenerateButtonContent(true)}
+            </button>
+            {hasSelectedApiKey ? (
+              <button
+                onClick={(e) => {createRipple(e); handleAnimate();}}
+                disabled={isLoading || isVideoLoading || !!upscalingId || referenceImages.length !== 1}
+                style={{'--glow-color': 'rgba(225, 29, 72, 0.6)'} as React.CSSProperties}
+                className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${(isVideoLoading) ? 'animate-pulse-glow' : ''}`}
+              >
+                {isVideoLoading ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    <span>Animating ({videoProgress.toFixed(0)}%)...</span>
+                  </>
+                ) : (
+                    <>
+                      <Film size={20} /> Animate Character (8s)
+                    </>
+                )}
+              </button>
+            ) : (
+              <div className="flex flex-col items-center text-center gap-2 p-4 glass-card rounded-2xl">
+                  <h3 className="font-semibold text-gray-100">Enable Video Generation</h3>
+                  <p className="text-xs text-gray-400 mb-2">
+                      Select an API key to enable this premium feature. See the <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-purple-400 underline hover:text-purple-300">billing docs</a> for details.
+                  </p>
+                  <button
+                      onClick={(e) => {createRipple(e); handleSelectApiKey();}}
+                      className={`relative overflow-hidden w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-400 hover:to-sky-400 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/30`}
+                  >
+                      <KeyRound size={20} /> Select API Key
+                  </button>
               </div>
             )}
           </div>
-        )}
-        {error && <p className="text-red-400 mt-4 text-center p-3 bg-red-900/20 border border-red-800 rounded-lg">{error}</p>}
+          {(isLoading || isVideoLoading) && (
+            <div className="mt-4 space-y-3">
+              {isLoading && (
+                <div>
+                  <p className="text-sm text-center mb-1">Image Generation Progress</p>
+                  <div className="w-full bg-white/10 rounded-full h-2.5">
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                  </div>
+                </div>
+              )}
+              {isVideoLoading && (
+                <div>
+                  <p className="text-sm text-center mb-1">Video Generation Progress</p>
+                  <div className="w-full bg-white/10 rounded-full h-2.5">
+                    <div className="bg-gradient-to-r from-rose-500 to-pink-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${videoProgress}%` }}></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {error && <p className="text-red-400 mt-4 text-center p-3 bg-red-500/10 border border-red-500/20 rounded-lg">{error}</p>}
+        </div>
       </div>
-      <div className="lg:col-span-2 animate-fadeIn" style={{ animationDelay: '200ms' }}>
+
+      <div className="lg:col-span-2 xl:col-span-3 animate-fadeIn" style={{ animationDelay: '200ms' }}>
         <Gallery items={generatedItems} setItems={setGeneratedItems} onUpscale={handleUpscale} upscalingId={upscalingId} />
       </div>
     </div>

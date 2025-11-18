@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArtStyle } from '../types';
+import { ChevronDown } from 'lucide-react';
 
 interface StyleSelectorProps {
   styles: ArtStyle[];
@@ -23,18 +24,16 @@ export const StyleSelector: React.FC<StyleSelectorProps> = ({ styles, selectedSt
         value={selectedStyle.id}
         onChange={handleChange}
         disabled={disabled}
-        className="w-full bg-gray-700/50 border border-gray-600 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-800"
+        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 appearance-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-black/40 text-gray-200"
       >
         {styles.map(style => (
-          <option key={style.id} value={style.id} className="bg-gray-800 text-white">
+          <option key={style.id} value={style.id} className="bg-gray-900 text-white">
             {style.name}
           </option>
         ))}
       </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-        </svg>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+        <ChevronDown size={20} />
       </div>
     </div>
   );

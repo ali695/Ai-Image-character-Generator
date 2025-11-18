@@ -47,22 +47,23 @@ export const UploadBox: React.FC<UploadBoxProps> = ({ onImagesUpload, referenceI
   return (
     <div>
       {referenceImages.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="grid grid-cols-3 gap-3 mb-3">
           {referenceImages.map((image, index) => (
-            <div key={index} className="relative aspect-square">
+            <div key={index} className="relative aspect-square group">
               <img src={image} alt={`Reference ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
               <button
                 onClick={() => onImageRemove(index)}
-                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-colors"
+                className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-500 text-white rounded-full p-1 transition-all transform scale-75 opacity-0 group-hover:scale-100 group-hover:opacity-100"
                 aria-label="Remove image"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             </div>
           ))}
           {referenceImages.length < maxImages && (
-             <label htmlFor="file-upload-add" className="cursor-pointer aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg text-center hover:border-indigo-500 hover:bg-gray-800 transition-colors">
-                <PlusCircle className="h-8 w-8 text-gray-400"/>
+             <label htmlFor="file-upload-add" className="cursor-pointer aspect-square flex flex-col items-center justify-center border-2 border-dashed border-white/20 rounded-lg text-center hover:border-purple-500 hover:bg-purple-500/10 transition-colors">
+                <PlusCircle className="h-8 w-8 text-gray-500"/>
                 <span className="text-xs mt-1 text-gray-400">Add more</span>
              </label>
           )}
@@ -73,7 +74,7 @@ export const UploadBox: React.FC<UploadBoxProps> = ({ onImagesUpload, referenceI
         <div
           onDrop={onDrop}
           onDragOver={onDragOver}
-          className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 hover:bg-gray-800 transition-colors"
+          className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center cursor-pointer hover:border-purple-500 hover:bg-purple-500/10 transition-colors"
         >
           <input
             type="file"
@@ -83,12 +84,12 @@ export const UploadBox: React.FC<UploadBoxProps> = ({ onImagesUpload, referenceI
             multiple
             onChange={handleFileChange}
           />
-          <label htmlFor="file-upload-initial" className="cursor-pointer">
-            <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-sm text-gray-400">
-              <span className="font-semibold text-indigo-400">Upload up to {maxImages} references</span> or drag & drop.
+          <label htmlFor="file-upload-initial" className="cursor-pointer flex flex-col items-center justify-center">
+            <UploadCloud className="mx-auto h-10 w-10 text-gray-500 mb-2" />
+            <p className="text-sm text-gray-400">
+              <span className="font-semibold text-purple-400">Click to upload</span> or drag & drop
             </p>
-            <p className="text-xs text-gray-500 mt-1">For best results, use clear photos of the same character.</p>
+            <p className="text-xs text-gray-500 mt-1">Up to {maxImages} reference images</p>
           </label>
         </div>
       )}

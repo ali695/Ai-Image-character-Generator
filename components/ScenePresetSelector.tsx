@@ -13,15 +13,15 @@ export const ScenePresetSelector: React.FC<ScenePresetSelectorProps> = ({ select
       <label className="block text-sm font-medium text-gray-400 mb-2">
         Or choose a scene preset
       </label>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="flex flex-wrap gap-2">
         {SCENE_PRESETS.map((preset) => (
           <button
             key={preset.id}
             onClick={() => onSelectPreset(preset)}
-            className={`text-xs text-center p-2 rounded-md transition-all duration-200 border-2 ${
+            className={`text-xs text-center px-3 py-1.5 rounded-full transition-all duration-200 border ${
               selectedPreset?.id === preset.id
-                ? 'bg-indigo-600 border-indigo-400 text-white font-semibold'
-                : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:border-indigo-500 hover:bg-gray-700'
+                ? 'bg-purple-600 border-purple-400 text-white font-semibold shadow-[0_0_10px_rgba(168,85,247,0.5)]'
+                : 'bg-black/20 border-white/10 text-gray-300 hover:border-purple-500 hover:text-white'
             }`}
           >
             {preset.name}

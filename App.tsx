@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Image, MessageSquare, Mic } from 'lucide-react';
+import { Image, MessageSquare } from 'lucide-react';
 import { ImageGenerator } from './components/ImageGenerator';
 import { Chatbot } from './components/Chatbot';
 
@@ -23,40 +23,43 @@ const App: React.FC = () => {
   const TabButton: React.FC<{ tabName: Tab; icon: React.ReactNode; label: string }> = ({ tabName, icon, label }) => (
     <button
       onClick={() => setActiveTab(tabName)}
-      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
+      className={`relative flex items-center gap-2.5 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
         activeTab === tabName
-          ? 'bg-indigo-600 text-white shadow-lg'
-          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+          ? 'text-white'
+          : 'text-gray-400 hover:bg-white/10 hover:text-white'
       }`}
     >
-      {icon}
-      {label}
+      {activeTab === tabName && (
+        <span className="absolute inset-0 z-0 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+      )}
+      <span className="relative z-10">{icon}</span>
+      <span className="relative z-10">{label}</span>
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
-      <div className="relative isolate min-h-screen">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(#374151_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
-        <div className="container mx-auto px-4 py-8">
-          <header className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
-              AI Character Factory
-            </h1>
-            <p className="mt-2 text-gray-400">Your one-stop shop for AI-powered creation</p>
-          </header>
+    <div className="min-h-screen font-sans">
+      <div className="relative isolate flex flex-col min-h-screen">
+        <div className="absolute inset-0 -z-20 h-full w-full premium-background"></div>
+        <div className="absolute inset-0 -z-10 h-full w-full background-grid-glow"></div>
+        
+        <header className="flex-shrink-0 pt-8 pb-6 z-10">
+           <div className="flex flex-col items-center gap-4">
+              <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-gray-50 to-gray-300 drop-shadow-lg">
+                AI Character Factory
+              </h1>
+              <nav className="flex justify-center">
+                <div className="flex items-center gap-2 p-1.5 glass-card rounded-full">
+                  <TabButton tabName="generator" icon={<Image size={16} />} label="Image Generator" />
+                  <TabButton tabName="chatbot" icon={<MessageSquare size={16} />} label="Chatbot" />
+                </div>
+              </nav>
+           </div>
+        </header>
 
-          <nav className="flex justify-center mb-8">
-            <div className="flex items-center gap-4 p-2 bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700">
-              <TabButton tabName="generator" icon={<Image size={18} />} label="Image Generator" />
-              <TabButton tabName="chatbot" icon={<MessageSquare size={18} />} label="Chatbot" />
-            </div>
-          </nav>
-
-          <main>
-            {renderTabContent()}
-          </main>
-        </div>
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 flex-1 w-full pb-16">
+          {renderTabContent()}
+        </main>
       </div>
     </div>
   );
