@@ -1,81 +1,214 @@
-import { PresetCategory } from './types';
-import {
-  Palette, Globe, Camera, Paintbrush, TrendingUp, Sparkles, User, Bot, Dna, Shirt, Crown, Shield, Wand, Skull, Smile,
-  Mountain, Trees, Building2, Ship, Annoyed, Sprout, Landmark, Waves, Atom, Aperture, Clapperboard, Sun, Moon, Film,
-  Mic, Pencil, Cuboid, ToyBrick, Droplets, PenTool, VenetianMask, SprayCan, Hand, Popcorn, Heart, Eye, Lollipop, Baby
-} from 'lucide-react';
+import { PresetCategory, Preset } from './types';
+import { Film, User, Heart, Palette, Globe, Camera, Paintbrush, TrendingUp, Sparkles, Ghost, Bot, Moon, Image } from 'lucide-react';
+
+const p_url = (seed: string, size = 200) => `https://picsum.photos/seed/${seed}/${size}`;
 
 export const PRESET_CATEGORIES: PresetCategory[] = [
   {
-    id: 'char-styles',
-    name: 'Character Styles',
+    id: 'cinematic',
+    name: 'Cinematic',
+    icon: Film,
+    presets: [
+      {
+        id: 'moody-cinematic', name: 'Moody Film',
+        prompt: 'moody cinematic film still, anamorphic lens flare, dramatic shadows, muted color palette, film grain',
+        thumbnail: p_url('moody-thumb'), tagline: 'Evocative, film-like dramatic scenes.', tags: ['cinematic', 'moody', 'film', 'dramatic'],
+        previewImages: [p_url('moody-1', 400), p_url('moody-2', 400), p_url('moody-3', 400)],
+      },
+      {
+        id: 'epic-landscape', name: 'Epic Landscape',
+        prompt: 'breathtaking cinematic landscape, wide-angle shot, epic scale, dramatic lighting, matte painting',
+        thumbnail: p_url('landscape-thumb'), tagline: 'Vast, movie-like natural vistas.', tags: ['landscape', 'cinematic', 'epic', 'nature'],
+        previewImages: [p_url('landscape-1', 400), p_url('landscape-2', 400), p_url('landscape-3', 400)],
+      },
+       {
+        id: 'action-shot', name: 'Action Shot',
+        prompt: 'dynamic action shot, motion blur, intense, high-energy, cinematic fight scene',
+        thumbnail: p_url('action-thumb'), tagline: 'High-energy, dynamic action.', tags: ['action', 'cinematic', 'motion'],
+        previewImages: [p_url('action-1', 400), p_url('action-2', 400), p_url('action-3', 400)],
+      },
+    ]
+  },
+  {
+    id: 'portraits',
+    name: 'Hyperreal Portraits',
+    icon: User,
+    presets: [
+      {
+        id: 'hyper-realistic', name: 'Hyper-Realistic',
+        prompt: 'hyper-realistic human portrait, detailed skin texture, catchlight in eyes, professional photography, 8k',
+        thumbnail: p_url('hyperreal-thumb'), tagline: 'Lifelike portraits with stunning detail.', tags: ['realistic', 'human', 'portrait', 'cinematic'],
+        previewImages: [p_url('hyperreal-1', 400), p_url('hyperreal-2', 400), p_url('hyperreal-3', 400)],
+      },
+      {
+        id: 'vogue-editorial', name: 'Vogue Editorial',
+        prompt: 'Vogue editorial fashion shoot, dramatic pose, high-fashion styling, professional studio lighting',
+        thumbnail: p_url('vogue-thumb'), tagline: 'High-fashion, magazine-quality shots.', tags: ['fashion', 'vogue', 'portrait', 'studio'],
+        previewImages: [p_url('vogue-1', 400), p_url('vogue-2', 400), p_url('vogue-3', 400)],
+      },
+      {
+        id: 'golden-hour', name: 'Golden Hour',
+        prompt: 'golden hour portrait, warm soft lighting, lens flare, magical and dreamy atmosphere',
+        thumbnail: p_url('golden-thumb'), tagline: 'Warm, magical, sun-kissed photos.', tags: ['portrait', 'golden hour', 'dreamy', 'light'],
+        previewImages: [p_url('golden-1', 400), p_url('golden-2', 400), p_url('golden-3', 400)],
+      },
+       {
+        id: 'black-white-film', name: 'Black & White',
+        prompt: 'black and white film photography, high contrast, grainy texture, dramatic shadows, timeless feel',
+        thumbnail: p_url('bw-thumb'), tagline: 'Timeless, high-contrast monochrome.', tags: ['b&w', 'film', 'portrait', 'dramatic'],
+        previewImages: [p_url('bw-1', 400), p_url('bw-2', 400), p_url('bw-3', 400)],
+      },
+    ]
+  },
+   {
+    id: 'kdrama',
+    name: 'K-Drama Aesthetics',
+    icon: Heart,
+    presets: [
+       {
+        id: 'kdrama-romance', name: 'Romance Scene',
+        prompt: 'K-drama romance scene, soft lighting, emotional, close-up shot, bokeh background, Seoul city view',
+        thumbnail: p_url('kdrama-romance'), tagline: 'Heartfelt, emotional moments.', tags: ['k-drama', 'romance', 'soft'],
+        previewImages: [p_url('kdrama-rom-1', 400), p_url('kdrama-rom-2', 400), p_url('kdrama-rom-3', 400)],
+      },
+      {
+        id: 'kdrama-idol', name: 'K-Pop Idol',
+        prompt: 'K-pop idol portrait, flawless skin, stylish outfit, charismatic expression, stage lighting',
+        thumbnail: p_url('kdrama-idol'), tagline: 'Charismatic idol visuals.', tags: ['k-drama', 'k-pop', 'idol', 'portrait'],
+        previewImages: [p_url('kdrama-idol-1', 400), p_url('kdrama-idol-2', 400), p_url('kdrama-idol-3', 400)],
+      },
+    ]
+  },
+  {
+    id: 'anime-stylized',
+    name: 'Anime & Stylized',
     icon: Palette,
     presets: [
-      { id: 'hyper-realistic', name: 'Hyper-Realistic Human', prompt: 'hyper-realistic human portrait, detailed skin texture, cinematic lighting, professional photography, 8k', icon: User },
-      { id: 'pixar-3d', name: 'Pixar-Style 3D', prompt: '3D animated character, Pixar style, soft lighting, detailed textures, vibrant colors, charming expression', icon: Bot },
-      { id: 'disney-illustration', name: 'Disney-Illustration', prompt: 'classic Disney animation style, expressive features, smooth lines, vibrant storybook illustration', icon: Dna },
-      { id: 'anime-manga', name: 'Anime / Manga', prompt: 'modern anime manga style, detailed eyes, dynamic hair, sharp lines, vibrant colors', icon: Annoyed },
-      { id: 'studio-ghibli', name: 'Studio Ghibli', prompt: 'Studio Ghibli inspired anime style, painterly backgrounds, whimsical, soft and warm color palette, nostalgic atmosphere', icon: Sprout },
-      { id: 'video-game', name: 'Video-Game Character', prompt: 'next-gen video game character concept art, realistic textures, detailed armor, dynamic pose, Unreal Engine 5 render', icon: Shield },
-      { id: 'cyberpunk-char', name: 'Cyberpunk Character', prompt: 'cyberpunk character, neon-lit, futuristic clothing, cybernetic enhancements, dystopian city background', icon: Building2 },
-      { id: 'cute-chibi', name: 'Cute Chibi', prompt: 'cute chibi character, oversized head, large expressive eyes, simple and adorable design, vibrant colors', icon: Smile },
-      { id: 'stylized-portrait', name: 'Stylized Portrait', prompt: 'stylized character portrait, artistic interpretation, exaggerated features, unique art style, trending on ArtStation', icon: Pencil },
-      { id: 'ai-fashion-model', name: 'AI Fashion Model', prompt: 'AI fashion model, high fashion, haute couture, editorial pose, flawless, hyperrealistic', icon: Shirt },
-      { id: 'fantasy-warrior', name: 'Fantasy Warrior', prompt: 'epic fantasy warrior, intricate armor, glowing weapon, mythical setting, dynamic battle stance, detailed concept art', icon: Shield },
-      { id: 'medieval-knight', name: 'Medieval Knight', prompt: 'medieval knight in full plate armor, historically accurate, weathered and battle-worn, castle background', icon: Crown },
-      { id: 'magical-sorcerer', name: 'Magical Sorcerer', prompt: 'powerful sorcerer casting a spell, glowing magical energy, ancient robes, mystical library setting', icon: Wand },
-      { id: 'mythical-creature', name: 'Mythical Creature', prompt: 'majestic mythical creature, detailed scales and fur, enchanted forest environment, epic fantasy art', icon: Skull },
-      { id: 'cartoon-mascot', name: 'Cartoon Mascot', prompt: 'friendly cartoon mascot, bold outlines, simple shapes, vibrant colors, perfect for a brand logo', icon: ToyBrick },
+      {
+        id: 'pixar-3d', name: 'Pixar-Style 3D',
+        prompt: '3D animated character, Pixar style, soft lighting, detailed textures, vibrant colors, charming expression',
+        thumbnail: p_url('pixar-thumb'), tagline: 'Charming, family-friendly 3D characters.', tags: ['3d', 'pixar', 'cartoon', 'cute'],
+        previewImages: [p_url('pixar-1', 400), p_url('pixar-2', 400), p_url('pixar-3', 400)],
+      },
+      {
+        id: 'anime-manga', name: 'Modern Anime',
+        prompt: 'modern anime manga style, detailed eyes, dynamic hair, sharp lines, vibrant colors, trending on pixiv',
+        thumbnail: p_url('anime-thumb'), tagline: 'Vibrant and dynamic Japanese animation.', tags: ['anime', 'manga', 'cartoon', 'japanese'],
+        previewImages: [p_url('anime-1', 400), p_url('anime-2', 400), p_url('anime-3', 400)],
+      },
+      {
+        id: 'ghibli-style', name: 'Ghibli Style',
+        prompt: 'Studio Ghibli inspired art, painterly background, whimsical character, nostalgic and heartwarming',
+        thumbnail: p_url('ghibli-thumb'), tagline: 'Nostalgic, heartwarming animation.', tags: ['anime', 'ghibli', 'painterly'],
+        previewImages: [p_url('ghibli-1', 400), p_url('ghibli-2', 400), p_url('ghibli-3', 400)],
+      },
+      {
+        id: 'character-sheet', name: 'Character Sheet',
+        prompt: 'game character design sheet, multiple views, turnaround, detailed concept art, clean background',
+        thumbnail: p_url('charsheet-thumb'), tagline: 'For game and animation concepts.', tags: ['character design', 'concept art', 'game'],
+        previewImages: [p_url('charsheet-1', 400), p_url('charsheet-2', 400), p_url('charsheet-3', 400)],
+      },
     ]
   },
   {
-    id: 'env-scenes',
-    name: 'Environment & Scenes',
-    icon: Globe,
+    id: 'dark-fantasy',
+    name: 'Dark Fantasy',
+    icon: Ghost,
     presets: [
-      { id: 'cinematic-landscape', name: 'Cinematic Landscape', prompt: 'breathtaking cinematic landscape, wide-angle shot, epic scale, dramatic lighting, matte painting', icon: Mountain },
-      { id: 'enchanted-forest', name: 'Enchanted Forest', prompt: 'enchanted forest at twilight, glowing mushrooms, ancient trees, magical atmosphere, fireflies', icon: Trees },
-      { id: 'cyberpunk-city', name: 'Cyberpunk City', prompt: 'cyberpunk city at night, neon-soaked skyscrapers, flying vehicles, rainy streets, Blade Runner aesthetic', icon: Building2 },
-      { id: 'post-apocalyptic', name: 'Post-Apocalyptic', prompt: 'post-apocalyptic wasteland, overgrown ruins, dramatic sky, sense of solitude, The Last of Us inspired', icon: Landmark },
-      { id: 'futuristic-sci-fi', name: 'Futuristic Sci-Fi', prompt: 'clean futuristic sci-fi interior, minimalist design, holographic displays, advanced technology, pristine', icon: Atom },
-      { id: 'underwater-world', name: 'Underwater World', prompt: 'vibrant underwater coral reef, diverse marine life, sun rays filtering through water, crystal clear', icon: Waves },
-      { id: 'snowy-mountains', name: 'Snowy Mountains', prompt: 'majestic snowy mountains at sunrise, sharp peaks, pink and orange sky, serene and vast', icon: Mountain },
-      { id: 'retro-diner', name: 'Retro Diner', prompt: '1950s American retro diner at night, neon lights, checkered floor, jukebox, nostalgic atmosphere', icon: Ship },
-      { id: 'mystical-library', name: 'Mystical Library', prompt: 'vast mystical library, towering bookshelves, floating books, magical glowing orbs, ancient and grand', icon: Landmark },
-      { id: 'ocean-sunset', name: 'Ocean Beach Sunset', prompt: 'tropical beach at sunset, calm ocean, palm trees silhouettes, vibrant orange and purple sky, peaceful', icon: Waves },
+       {
+        id: 'dark-fantasy-art', name: 'Dark Fantasy',
+        prompt: 'dark fantasy character art, gothic, moody lighting, intricate details, style of Dark Souls, epic',
+        thumbnail: p_url('darkfantasy-thumb'), tagline: 'Gothic, epic, and moody.', tags: ['fantasy', 'dark', 'gothic', 'epic'],
+        previewImages: [p_url('darkfantasy-1', 400), p_url('darkfantasy-2', 400), p_url('darkfantasy-3', 400)],
+      },
+      {
+        id: 'horror', name: 'Horror',
+        prompt: 'cinematic horror scene, suspenseful, dark, eerie atmosphere, style of cosmic horror',
+        thumbnail: p_url('horror-thumb'), tagline: 'Suspenseful and eerie visuals.', tags: ['horror', 'dark', 'eerie'],
+        previewImages: [p_url('horror-1', 400), p_url('horror-2', 400), p_url('horror-3', 400)],
+      },
     ]
   },
   {
-    id: 'photo-presets',
-    name: 'Photography Presets',
-    icon: Camera,
+    id: 'sci-fi',
+    name: 'Cyberpunk Neon',
+    icon: Bot,
     presets: [
-      { id: 'ultra-photorealistic', name: 'Ultra-Photorealistic', prompt: 'ultra-photorealistic shot, professional photography, Canon EOS R5, 85mm f/1.2 lens, incredibly detailed', icon: Aperture },
-      { id: 'dslr-portrait', name: 'DSLR Portrait', prompt: 'DSLR portrait photography, soft bokeh background, natural lighting, sharp focus on eyes, beautiful composition', icon: User },
-      { id: 'vogue-editorial', name: 'Vogue Editorial', prompt: 'Vogue editorial fashion shoot, dramatic pose, high-fashion styling, professional studio lighting', icon: Shirt },
-      { id: 'moody-cinematic', name: 'Moody Cinematic', prompt: 'moody cinematic film still, anamorphic lens flare, dramatic shadows, muted color palette, film grain', icon: Clapperboard },
-      { id: 'golden-hour', name: 'Golden Hour', prompt: 'golden hour portrait, warm soft lighting, lens flare, magical and dreamy atmosphere', icon: Sun },
-      { id: 'studio-lighting', name: 'Studio Lighting', prompt: 'professional studio portrait, clean background, three-point lighting setup, sharp and polished', icon: Mic },
-      { id: 'black-white-film', name: 'Black & White Film', prompt: 'black and white film photography, high contrast, grainy texture, dramatic shadows, timeless feel', icon: Film },
-      { id: 'macro-photography', name: 'Macro Photography', prompt: 'extreme macro photography, tiny details, beautiful bokeh, sharp focus', icon: Sprout },
-      { id: 'soft-dreamy', name: 'Soft Dreamy Aesthetic', prompt: 'soft and dreamy aesthetic, hazy glow, pastel colors, ethereal and gentle mood', icon: Moon },
+       {
+        id: 'cyberpunk-char', name: 'Cyberpunk',
+        prompt: 'cyberpunk character, neon-lit, futuristic clothing, cybernetic enhancements, dystopian city background',
+        thumbnail: p_url('cyberpunk-char-thumb'), tagline: 'High-tech rebels in a neon future.', tags: ['cyberpunk', 'sci-fi', 'futuristic', 'neon'],
+        previewImages: [p_url('cyberpunk-1', 400), p_url('cyberpunk-2', 400), p_url('cyberpunk-3', 400)],
+      },
+      {
+        id: 'game-ready', name: 'Game-Ready Model',
+        prompt: 'game-ready 3d model render, realistic PBR textures, neutral pose, Unreal Engine 5, high quality',
+        thumbnail: p_url('gameready-thumb'), tagline: 'AAA-quality 3D model renders.', tags: ['3d', 'game', 'realistic', 'pbr'],
+        previewImages: [p_url('gameready-1', 400), p_url('gameready-2', 400), p_url('gameready-3', 400)],
+      },
     ]
   },
   {
-    id: 'art-styles',
-    name: 'Artistic Styles',
+    id: 'digital-painting',
+    name: 'Digital Painting',
     icon: Paintbrush,
     presets: [
-      { id: 'oil-painting', name: 'Oil Painting', prompt: 'classic oil painting, visible brush strokes, rich colors, detailed and textured, style of old masters', icon: Paintbrush },
-      { id: 'watercolor-painting', name: 'Watercolor Painting', prompt: 'watercolor painting, soft and translucent colors, wet-on-wet technique, delicate and expressive', icon: Droplets },
-      // Fix: The icon was incorrectly a string. Changed to the component reference PenTool.
-      { id: 'sketch-drawing', name: 'Sketch / Drawing', prompt: 'pencil sketch, detailed line art, cross-hatching shading, hand-drawn, black and white', icon: PenTool },
-      { id: 'pop-art', name: 'Pop Art', prompt: 'pop art style, bold colors, graphic print, Andy Warhol inspired, comic book aesthetic', icon: Popcorn },
-      { id: 'surreal-art', name: 'Surreal Art', prompt: 'surrealist art, dreamlike, bizarre and unexpected imagery, Salvador Dali style', icon: Eye },
-      { id: 'pixel-art', name: 'Pixel Art', prompt: 'pixel art, 8-bit or 16-bit style, retro video game aesthetic, clean pixels', icon: Cuboid },
-      { id: 'low-poly', name: 'Low Poly Art', prompt: 'low poly 3D render, geometric shapes, minimalist and stylized, vibrant color palette', icon: Cuboid },
-      { id: 'graffiti-art', name: 'Graffiti Art', prompt: 'urban graffiti street art, spray paint, bold and colorful, stencil and tag style', icon: SprayCan },
-      { id: 'paper-art', name: 'Paper Art (Quilling)', prompt: 'intricate paper art, quilling technique, 3D paper sculpture, delicate and detailed', icon: Hand },
+      {
+        id: 'oil-painting', name: 'Oil Painting',
+        prompt: 'classic oil painting, visible brush strokes, rich colors, detailed and textured, style of old masters',
+        thumbnail: p_url('oil-thumb'), tagline: 'Rich, textured, classical paintings.', tags: ['art', 'painting', 'classic', 'oil'],
+        previewImages: [p_url('oil-1', 400), p_url('oil-2', 400), p_url('oil-3', 400)],
+      },
+      {
+        id: 'watercolor', name: 'Watercolor',
+        prompt: 'watercolor painting, soft and translucent colors, wet-on-wet technique, delicate and expressive',
+        thumbnail: p_url('water-thumb'), tagline: 'Light, airy, and expressive artwork.', tags: ['art', 'painting', 'watercolor', 'soft'],
+        previewImages: [p_url('watercolor-1', 400), p_url('watercolor-2', 400), p_url('watercolor-3', 400)],
+      },
+    ]
+  },
+  {
+    id: 'vintage',
+    name: 'Vintage Film',
+    icon: Camera,
+    presets: [
+       {
+        id: 'vintage-photo', name: 'Vintage Photo',
+        prompt: 'vintage photograph, sepia tones, old-fashioned, grainy, 1920s style',
+        thumbnail: p_url('vintage-photo-thumb'), tagline: 'Nostalgic, grainy film look.', tags: ['vintage', 'retro', 'film', 'sepia'],
+        previewImages: [p_url('vintage-1', 400), p_url('vintage-2', 400), p_url('vintage-3', 400)],
+      },
+      {
+        id: '90s-film', name: '90s Film Look',
+        prompt: '90s film photography, grainy, slightly faded colors, nostalgic vibe, disposable camera look',
+        thumbnail: p_url('90s-film-thumb'), tagline: 'Authentic 90s nostalgia.', tags: ['vintage', '90s', 'retro', 'film'],
+        previewImages: [p_url('90s-1', 400), p_url('90s-2', 400), p_url('90s-3', 400)],
+      },
+    ]
+  },
+  {
+    id: 'viral-styles',
+    name: 'TikTok Viral Styles',
+    icon: TrendingUp,
+    presets: [
+      {
+        id: 'ai-fashion-shoot', name: 'AI Fashion Shoot',
+        prompt: 'hyperrealistic full-body shot of an AI-generated fashion model, haute couture, walking on a runway, editorial lighting, Vogue aesthetic',
+        thumbnail: p_url('fashion-thumb'), tagline: 'Create stunning, hyper-real models.', tags: ['fashion', 'realistic', 'portrait', 'vogue'],
+        previewImages: [p_url('fashion-1', 400), p_url('fashion-2', 400), p_url('fashion-3', 400)],
+      },
+      {
+        id: 'glowy-skin-portrait', name: 'Glowy Skin',
+        prompt: 'dreamy portrait with glowing skin, soft focus, ethereal lighting, pastel colors, fantasy glow, bloom effect',
+        thumbnail: p_url('glow-thumb'), tagline: 'Ethereal portraits with a magical glow.', tags: ['portrait', 'fantasy', 'glow', 'dreamy'],
+        previewImages: [p_url('glow-1', 400), p_url('glow-2', 400), p_url('glow-3', 400)],
+      },
+      {
+        id: 'y2k-glossy', name: 'Y2K Glossy',
+        prompt: 'Y2K aesthetic, glossy 3D character, cybercore, airbrush finish, iridescent and holographic materials, pink and chrome, early 2000s vibe',
+        thumbnail: p_url('y2k-thumb'), tagline: 'Nostalgic, glossy, early 2000s style.', tags: ['y2k', '3d', 'glossy', 'cyber'],
+        previewImages: [p_url('y2k-1', 400), p_url('y2k-2', 400), p_url('y2k-3', 400)],
+      },
     ]
   }
 ];

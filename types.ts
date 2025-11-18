@@ -19,14 +19,17 @@ export interface ArtStyle {
   id:string;
   name: string;
   prompt_suffix: string;
-  thumbnail: string;
+  icon: React.FC<LucideProps>;
 }
 
 export interface Preset {
   id: string;
   name: string;
   prompt: string;
-  icon: React.FC<LucideProps>;
+  thumbnail: string;
+  tagline: string;
+  tags: string[];
+  previewImages: string[];
 }
 
 export interface PresetCategory {

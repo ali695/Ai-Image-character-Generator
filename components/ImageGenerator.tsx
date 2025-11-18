@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sparkles, Package, Loader2, Film, KeyRound, Upload, FileText, Palette, SlidersHorizontal, Eye, Compass } from 'lucide-react';
-import { GeneratedItem, ArtStyle } from '../types';
+import { GeneratedItem, ArtStyle, Preset } from '../types';
 import { ART_STYLES, DETAIL_LEVELS, ENHANCED_QUALITY_PROMPT } from '../constants';
-import { generateImageVariations, upscaleImage, generateVideo } from '../services/geminiService';
+import { generateImageVariations, upscaleImage, generateVideo, analyzePromptForSuggestions } from '../services/geminiService';
 import { fileToBase64 } from '../utils/fileUtils';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Gallery } from './Gallery';
@@ -10,10 +10,9 @@ import { StyleSelector } from './StyleSelector';
 import { UploadBox } from './UploadBox';
 import { QualityControls } from './QualityControls';
 import { ImageEditorModal } from './ImageEditorModal';
-import { PresetBrowser } from './PresetBrowser';
+import { PresetSelector } from './PresetSelector';
+import { AISuggestionsBar } from './AISuggestionsBar';
 
-// Fix: Defined the AIStudio interface and used it in the Window interface
-// to resolve the type conflict with other potential global declarations.
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
@@ -51,20 +50,34 @@ export const ImageGenerator: React.FC = () => {
   const [upscalingId, setUpscalingId] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<GeneratedItem | null>(null);
-  const [isPresetBrowserOpen, setIsPresetBrowserOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  
+  const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
 
-  // New Quality Control State
   const [batchSize, setBatchSize] = useState<number>(50);
   const [aspectRatio, setAspectRatio] = useState<string>('1:1');
-  const [detailLevel, setDetailLevel] = useState(DETAIL_LEVELS[2]); // Default to 'High'
+  const [detailLevel, setDetailLevel] = useState(DETAIL_LEVELS[2]);
   const [imageFormat, setImageFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
   const [enhanceQuality, setEnhanceQuality] = useState<boolean>(false);
   
-  // New state for API key selection
   const [hasSelectedApiKey, setHasSelectedApiKey] = useState<boolean>(false);
 
-
   const STORAGE_LIMIT = 20;
+  
+  const debouncedAnalyzePrompt = useCallback((p: string, preset: Preset | null) => {
+    const { smartTags } = analyzePromptForSuggestions(p, preset);
+    setAiSuggestions(smartTags);
+  }, []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      debouncedAnalyzePrompt(prompt, selectedPreset);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [prompt, selectedPreset, debouncedAnalyzePrompt]);
 
   useEffect(() => {
     const checkApiKey = async () => {
@@ -82,14 +95,17 @@ export const ImageGenerator: React.FC = () => {
   }, []);
   
   const handleGenerate = async (bulk = false) => {
-    if (!prompt && referenceImages.length === 0) {
-      setError('Please describe your character or upload a reference image.');
+    const finalPrompt = [selectedPreset?.prompt, prompt].filter(Boolean).join(', ');
+
+    if (!finalPrompt && referenceImages.length === 0) {
+      setError('Please choose a preset and describe your character, or upload a reference image.');
       return;
     }
-    if (referenceImages.length > 0 && !prompt) {
-      setError('With reference images, please describe the character or a scene.');
+    if (referenceImages.length > 0 && !finalPrompt) {
+      setError('With reference images, please choose a preset and describe the character or a scene.');
       return;
     }
+
     setIsLoading(true);
     setError(null);
     setProgress(0);
@@ -104,7 +120,7 @@ export const ImageGenerator: React.FC = () => {
         : `${selectedStyle.prompt_suffix}, ${detailLevel.prompt_suffix}`;
         
       const imageResults = await generateImageVariations(
-        prompt, count, referenceImages, setProgress, styleSuffix, aspectRatio, imageFormat, traitsToMaintain
+        finalPrompt, count, referenceImages, setProgress, styleSuffix, aspectRatio, imageFormat, traitsToMaintain
       );
 
       const newImages: GeneratedItem[] = imageResults.map(result => ({
@@ -137,9 +153,8 @@ export const ImageGenerator: React.FC = () => {
     if (window.aistudio) {
       try {
         await window.aistudio.openSelectKey();
-        // Per guidelines, assume success after dialog to handle race conditions.
         setHasSelectedApiKey(true);
-        setError(null); // Clear previous errors to allow retrying animation.
+        setError(null);
       } catch (e) {
         console.error("Error opening API key selection:", e);
         setError("Could not open the API key selection dialog.");
@@ -185,7 +200,7 @@ export const ImageGenerator: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('entity was not found')) {
         setError('Video generation failed. Your API key may be invalid or missing permissions. Please select a different key.');
-        setHasSelectedApiKey(false); // Reset to show the select key button again
+        setHasSelectedApiKey(false);
       } else {
         setError(`Error generating video: ${errorMessage}`);
       }
@@ -257,9 +272,13 @@ export const ImageGenerator: React.FC = () => {
     setEditingItem(null);
   };
   
-  const handleSelectPreset = (presetPrompt: string) => {
-    setPrompt(prev => prev ? `${prev.trim()}, ${presetPrompt}` : presetPrompt);
-    setIsPresetBrowserOpen(false);
+  const handleSuggestionClick = (tag: string) => {
+    setPrompt(prev => {
+        const trimmedPrev = prev.trim();
+        if (!trimmedPrev) return tag;
+        if (trimmedPrev.endsWith(',')) return `${trimmedPrev} ${tag}`;
+        return `${trimmedPrev}, ${tag}`;
+    });
   };
 
   const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -307,10 +326,8 @@ export const ImageGenerator: React.FC = () => {
         </div>
       )}
       
-      {/* Left Control Panel */}
       <div className="lg:col-span-1 xl:col-span-1 flex flex-col animate-fadeIn" style={{ animationDelay: '100ms' }}>
         
-        {/* Scrollable Upper Section */}
         <div className="flex-1 space-y-6 overflow-y-auto pr-4 pb-6 -mr-4">
           <ControlModule icon={<Upload size={18} className="text-gray-300" />} title="Upload References">
               <UploadBox onImagesUpload={handleImagesUpload} referenceImages={referenceImages} onImageRemove={handleImageRemove}/>
@@ -321,21 +338,23 @@ export const ImageGenerator: React.FC = () => {
               )}
           </ControlModule>
 
+          <ControlModule icon={<Compass size={18} className="text-gray-300" />} title="Choose a Preset">
+            <PresetSelector 
+              selectedPreset={selectedPreset}
+              onSelectPreset={setSelectedPreset}
+            />
+          </ControlModule>
+
           <ControlModule icon={<FileText size={18} className="text-gray-300" />} title="Describe your Character">
              <div className="relative">
                 <textarea
                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none h-28 placeholder-gray-500"
-                    placeholder={referenceImages.length > 0 ? "e.g., a brave knight in a forest..." : "A photorealistic portrait of a woman..."}
+                    placeholder={selectedPreset ? "Add details, e.g., a brave knight with a silver sword, realistic textures..." : "First, choose a preset above, then describe your character..."}
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                 />
-                 <button 
-                    onClick={() => setIsPresetBrowserOpen(true)}
-                    className="absolute bottom-3 right-3 flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 text-white font-semibold py-1.5 px-3 rounded-full transition-colors"
-                  >
-                   <Compass size={14} /> Presets
-                  </button>
              </div>
+              <AISuggestionsBar suggestions={aiSuggestions} onSuggestionClick={handleSuggestionClick} />
           </ControlModule>
 
           {referenceImages.length > 0 && (
@@ -366,7 +385,6 @@ export const ImageGenerator: React.FC = () => {
           </ControlModule>
         </div>
         
-        {/* Anchored Bottom Section */}
         <div className="flex-shrink-0 pt-6">
           <div className="flex flex-col gap-4">
             <button
@@ -450,12 +468,6 @@ export const ImageGenerator: React.FC = () => {
         imageSrc={editingItem ? `data:${editingItem.mimeType || 'image/png'};base64,${editingItem.data}` : null}
         onClose={() => setEditingItem(null)}
         onSave={handleEditSave}
-      />
-      
-      <PresetBrowser
-        isOpen={isPresetBrowserOpen}
-        onClose={() => setIsPresetBrowserOpen(false)}
-        onSelectPreset={handleSelectPreset}
       />
 
     </div>

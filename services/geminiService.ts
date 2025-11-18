@@ -1,5 +1,6 @@
 import { GoogleGenAI, Chat, Modality, Type, Content } from '@google/genai';
-import { ChatMessage } from '../types';
+import { ChatMessage, Preset } from '../types';
+import { PRESET_CATEGORIES } from '../presets';
 
 const API_KEY = process.env.API_KEY;
 
@@ -263,4 +264,44 @@ export const generateSpeech = async (text: string): Promise<string | undefined> 
   } catch (error) {
     throw handleApiError(error, "speech generation");
   }
+};
+
+const allPresets = PRESET_CATEGORIES.flatMap(cat => cat.presets);
+
+export const analyzePromptForSuggestions = (prompt: string, selectedPreset: Preset | null): { recommendedPresets: string[], smartTags: string[] } => {
+  const lowerCasePrompt = prompt.toLowerCase();
+  const foundTags = new Set<string>();
+  
+  // Start with tags from the selected preset for relevance
+  if (selectedPreset) {
+    selectedPreset.tags.forEach(tag => foundTags.add(tag));
+  }
+
+  // Find additional tags from the prompt text by checking against all preset tags
+  allPresets.forEach(preset => {
+    preset.tags.forEach(tag => {
+      // Avoid adding redundant tags
+      if (!foundTags.has(tag) && lowerCasePrompt.includes(tag.toLowerCase())) {
+        foundTags.add(tag);
+      }
+    });
+  });
+
+  // Also recommend presets if their name or tags are in the prompt
+  const recommendedPresets = new Set<string>();
+  allPresets.forEach(preset => {
+    if (lowerCasePrompt.includes(preset.name.toLowerCase())) {
+        recommendedPresets.add(preset.id);
+    }
+    preset.tags.forEach(tag => {
+      if (lowerCasePrompt.includes(tag.toLowerCase())) {
+        recommendedPresets.add(preset.id);
+      }
+    });
+  });
+
+  return {
+    recommendedPresets: Array.from(recommendedPresets),
+    smartTags: Array.from(foundTags),
+  };
 };
