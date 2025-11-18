@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Package, Loader2, Film, KeyRound, Upload, FileText, Palette, SlidersHorizontal, Eye } from 'lucide-react';
 import { GeneratedItem, ArtStyle, ScenePreset } from '../types';
@@ -11,6 +10,7 @@ import { StyleSelector } from './StyleSelector';
 import { UploadBox } from './UploadBox';
 import { QualityControls } from './QualityControls';
 import { ScenePresetSelector } from './ScenePresetSelector';
+import { ImageEditorModal } from './ImageEditorModal';
 
 // Fix: Defined the AIStudio interface and used it in the Window interface
 // to resolve the type conflict with other potential global declarations.
@@ -50,6 +50,7 @@ export const ImageGenerator: React.FC = () => {
   const [generatedItems, setGeneratedItems] = useLocalStorage<GeneratedItem[]>('generatedItems', []);
   const [upscalingId, setUpscalingId] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState<boolean>(false);
+  const [editingItem, setEditingItem] = useState<GeneratedItem | null>(null);
 
   // New Quality Control State
   const [batchSize, setBatchSize] = useState<number>(50);
@@ -237,6 +238,27 @@ export const ImageGenerator: React.FC = () => {
     }
   };
   
+  const handleEditStart = (itemId: string) => {
+    const itemToEdit = generatedItems.find(item => item.id === itemId && item.type === 'image');
+    if (itemToEdit) {
+      setEditingItem(itemToEdit);
+    }
+  };
+
+  const handleEditSave = (editedImageData: string) => {
+    if (!editingItem) return;
+
+    const updatedItem: GeneratedItem = {
+      ...editingItem,
+      data: editedImageData.split(',')[1],
+      mimeType: 'image/png',
+      prompt: editingItem.prompt + ' (Edited)',
+    };
+
+    setGeneratedItems(prev => prev.map(item => (item.id === editingItem.id ? updatedItem : item)));
+    setEditingItem(null);
+  };
+
   const handlePresetSelection = (preset: ScenePreset | null) => {
     if (!preset) {
         setSelectedPreset(null);
@@ -429,8 +451,14 @@ export const ImageGenerator: React.FC = () => {
       </div>
 
       <div className="lg:col-span-2 xl:col-span-3 animate-fadeIn" style={{ animationDelay: '200ms' }}>
-        <Gallery items={generatedItems} setItems={setGeneratedItems} onUpscale={handleUpscale} upscalingId={upscalingId} />
+        <Gallery items={generatedItems} setItems={setGeneratedItems} onUpscale={handleUpscale} onEdit={handleEditStart} upscalingId={upscalingId} />
       </div>
+
+      <ImageEditorModal
+        imageSrc={editingItem ? `data:${editingItem.mimeType || 'image/png'};base64,${editingItem.data}` : null}
+        onClose={() => setEditingItem(null)}
+        onSave={handleEditSave}
+      />
     </div>
   );
 };

@@ -8,10 +8,11 @@ interface GalleryProps {
   items: GeneratedItem[];
   setItems: React.Dispatch<React.SetStateAction<GeneratedItem[]>>;
   onUpscale: (id: string) => void;
+  onEdit: (id: string) => void;
   upscalingId: string | null;
 }
 
-export const Gallery: React.FC<GalleryProps> = ({ items, setItems, onUpscale, upscalingId }) => {
+export const Gallery: React.FC<GalleryProps> = ({ items, setItems, onUpscale, onEdit, upscalingId }) => {
 
   const handleClearAll = () => {
     if (window.confirm('Are you sure you want to delete all generated items? This action cannot be undone.')) {
@@ -47,7 +48,8 @@ export const Gallery: React.FC<GalleryProps> = ({ items, setItems, onUpscale, up
               <ItemCard 
                 key={item.id} 
                 item={item} 
-                onUpscale={onUpscale} 
+                onUpscale={onUpscale}
+                onEdit={onEdit}
                 isUpscaling={upscalingId === item.id}
               />
             ))}

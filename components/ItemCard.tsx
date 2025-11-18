@@ -1,15 +1,16 @@
 import React from 'react';
-import { Download, ChevronsUp, Loader2, PlayCircle } from 'lucide-react';
+import { Download, ChevronsUp, Loader2, PlayCircle, Pencil } from 'lucide-react';
 import { GeneratedItem } from '../types';
 import { downloadImage, downloadVideoFromUrl } from '../utils/fileUtils';
 
 interface ItemCardProps {
   item: GeneratedItem;
   onUpscale: (id: string) => void;
+  onEdit: (id: string) => void;
   isUpscaling: boolean;
 }
 
-export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, isUpscaling }) => {
+export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, onEdit, isUpscaling }) => {
   const handleDownload = () => {
     const safePrompt = item.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase();
     if (item.type === 'image') {
@@ -60,15 +61,25 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onUpscale, isUpscaling
         <p className="text-white text-xs line-clamp-2 drop-shadow-md flex-1 mr-2">{item.prompt}</p>
         <div className="flex items-center gap-2 flex-shrink-0">
            {item.type === 'image' && (
-             <button
-              onClick={() => onUpscale(item.id)}
-              disabled={isUpscaling}
-              className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white p-2 rounded-full transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Upscale image"
-              title="Upscale Image"
-            >
-              <ChevronsUp size={16} />
-            </button>
+             <>
+                <button
+                  onClick={() => onEdit(item.id)}
+                  className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white p-2 rounded-full transition-all transform hover:scale-110"
+                  aria-label="Edit image"
+                  title="Edit Image"
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  onClick={() => onUpscale(item.id)}
+                  disabled={isUpscaling}
+                  className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white p-2 rounded-full transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Upscale image"
+                  title="Upscale Image"
+                >
+                  <ChevronsUp size={16} />
+                </button>
+             </>
            )}
           <button
             onClick={handleDownload}
