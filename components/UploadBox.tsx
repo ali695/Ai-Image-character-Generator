@@ -15,7 +15,7 @@ export const UploadBox: React.FC<UploadBoxProps> = ({ onImagesUpload, referenceI
     if (event.dataTransfer.files) {
       handleFiles(Array.from(event.dataTransfer.files));
     }
-  }, [referenceImages.length]);
+  }, [referenceImages.length, maxImages, onImagesUpload]);
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();

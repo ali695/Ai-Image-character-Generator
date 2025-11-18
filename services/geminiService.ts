@@ -131,11 +131,21 @@ export const generateImageVariations = async (
       const hasReferenceImages = referenceImages && referenceImages.length > 0;
 
       if (hasReferenceImages) {
-        let referencePrompt = 'Using the provided image(s) as a direct and primary reference, generate a new image. Strictly maintain the core identity, face, and key features of the character from the reference(s).';
-        if (traitsToMaintain) {
-          referencePrompt += ` Pay special attention to maintaining these specific traits: ${traitsToMaintain}.`;
+        let referencePrompt: string;
+        if (referenceImages.length > 1) {
+            referencePrompt = `Analyze all ${referenceImages.length} reference images provided. Synthesize the character's core identity, face, and key features from these multiple views to create a consistent representation. This is the same character seen from different angles or in different outfits; your primary goal is consistency.`;
+        } else {
+            referencePrompt = `Use the provided image as a direct and primary reference for the character's identity.`;
         }
-        fullPrompt = `${referencePrompt} The new image should depict: ${currentPrompt}. Apply the following style: ${styleSuffix}`;
+        
+        referencePrompt += ` Strictly maintain the character's appearance.`;
+
+        if (traitsToMaintain) {
+            referencePrompt += ` Pay special attention to these specific, non-negotiable traits: ${traitsToMaintain}. These must be present and accurate.`;
+        }
+
+        fullPrompt = `${referencePrompt} Now, place this character in the following scene: ${currentPrompt}. Apply this artistic style: ${styleSuffix}`;
+        
         const result = await generateImageFromImages(fullPrompt.replace(/, ,/g, ',').replace(/,\s*$/, '').trim(), referenceImages);
         base64Result = result.base64;
         resultMimeType = result.mimeType;
